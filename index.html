@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LPC尺度</title>
+
+<style>
+body{
+    font-family:sans-serif;
+    max-width:1100px;
+    margin:auto;
+    padding:20px;
+    line-height:1.6;
+}
+
+h1{
+    text-align:center;
+}
+
+.scale-row{
+    display:grid;
+    grid-template-columns:180px 1fr 180px;
+    gap:10px;
+    align-items:center;
+    margin:14px 0;
+}
+
+.radios{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.result{
+    display:none;
+}
+
+button{
+    padding:12px 24px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.note{
+    font-size:0.9em;
+    color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<div id="questionPage">
+
+<h1>LPC尺度</h1>
+
+<p>
+あなたがこれまでに経験したグループ活動の様々な場面で、
+一緒に活動することが極めて難しいと思ってしまった人、
+一人を思い浮かべてください。
+</p>
+
+<p>
+上司、指導者、先輩、同期・同僚、仲間、あるいは部下や後輩の
+誰であっても構いません。
+</p>
+
+<p>
+そのあなたが一緒に仕事をすることが
+<strong>最も難しいと思う人物</strong>
+を、次の尺度上で評定してください。
+</p>
+
+<div id="items"></div>
+
+<h3>あなたの性別を教えてください</h3>
+
+<label><input type="radio" name="sex" value="女性">女性</label>
+<label><input type="radio" name="sex" value="男性">男性</label>
+<label><input type="radio" name="sex" value="回答しない">回答しない</label>
+
+<h3>あなたの年齢を教えてください</h3>
+
+<input type="number" id="age" min="0" max="120"> 歳
+
+<br><br>
+
+<button onclick="showResult()">
+結果を見る
+</button>
+
+</div>
+
+<div id="resultPage" class="result">
+
+<h1>診断結果</h1>
+
+<p><strong>合計点：</strong><span id="score"></span></p>
+
+<p><strong>タイプ：</strong></p>
+
+<p id="typeText"></p>
+
+<p class="note">
+判定基準：64.2点<br>
+64.2以上＝高LPCリーダー（人間関係重視型リーダー）<br>
+64.2未満＝低LPCリーダー（仕事優先型リーダー）
+</p>
+
+<p class="note">
+※基準値64.2は、白樫（1991）による官庁・民間企業の管理者336名
+（平均45.8歳）への調査での平均値です。
+</p>
+
+</div>
+
+<script>
+
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycby1r0pPunvcoRqJK32h5uCweWZb0P3XwA_HfrmLwKnD_HtEwBwWeHrY_wdCv0AxiuDTHA/exec";
+
+const items = [
+["楽しい","楽しくない"],
+["友好的","非友好的"],
+["拒否的","受容的"],
+["緊張","リラックス"],
+["疎遠","親密"],
+["冷たい","暖かい"],
+["支持的","敵対的"],
+["退屈","面白い"],
+["口論好き","協調的"],
+["陰気","陽気"],
+["解放的","閉鎖的"],
+["裏表がある","忠実な"],
+["信頼できない","信頼できる"],
+["思いやりがある","思いやりがない"],
+["きたない（卑劣）","きれい（立派）"],
+["感じがよい","感じがわるい"],
+["誠実でない","誠実な"],
+["親切な","親切でない"]
+];
+
+const container = document.getElementById("items");
+
+items.forEach((item,index)=>{
+
+const row = document.createElement("div");
+row.className="scale-row";
+
+let radios = "";
+
+for(let i=1;i<=8;i++){
+radios += `
+<label>
+<input type="radio"
+name="q${index}"
+value="${i}">
+${i}
+</label>`;
+}
+
+row.innerHTML = `
+<div>${item[0]}</div>
+<div class="radios">${radios}</div>
+<div>${item[1]}</div>
+`;
+
+container.appendChild(row);
+
+});
+
+
+function showResult(){
+
+    const reverseItems = [0,1,6,10,13,15,17];
+
+    let rawAnswers = [];
+    let scoredAnswers = [];
+
+    for(let i=0;i<18;i++){
+
+        const checked =
+        document.querySelector(`input[name="q${i}"]:checked`);
+
+        if(!checked){
+            alert((i+1) + "項目目が未回答です");
+            return;
+        }
+
+        let value = Number(checked.value);
+
+        rawAnswers.push(value);
+
+        if(reverseItems.includes(i)){
+            value = 9 - value;
+        }
+
+        scoredAnswers.push(value);
+    }
+
+    const total =
+    scoredAnswers.reduce((a,b)=>a+b,0);
+
+    const type =
+    total >= 64.2
+    ? "高LPCリーダー（人間関係重視型リーダー）"
+    : "低LPCリーダー（仕事優先型リーダー）";
+
+    document.getElementById("score").textContent = total.toFixed(0);
+
+    document.getElementById("typeText").innerHTML = `
+        <strong>${type}</strong>
+    `;
+
+    document.getElementById("questionPage").style.display="none";
+    document.getElementById("resultPage").style.display="block";
+
+    const sex =
+    document.querySelector('input[name="sex"]:checked')
+    ?.value || "";
+
+    const age =
+    document.getElementById("age").value || "";
+
+fetch(GAS_URL,{
+    method:"POST",
+    body:JSON.stringify({
+        sex:sex,
+        age:age,
+        total:total,
+        type:type,
+        rawAnswers:rawAnswers,
+        scoredAnswers:scoredAnswers
+    }),
+    mode:"no-cors"
+})
+.then(()=>{
+    console.log("送信完了");
+})
+.catch(err=>{
+    console.error(err);
+}); 
+
+
+
+}
+
+</script>
+
+</body>
+</html>
